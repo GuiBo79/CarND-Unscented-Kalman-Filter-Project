@@ -4,6 +4,9 @@
 #include <math.h>
 #include "ukf.h"
 #include "tools.h"
+#include <fstream>
+
+
 
 using namespace std;
 
@@ -26,17 +29,30 @@ std::string hasData(std::string s) {
   return "";
 }
 
+//Create  Laser and Radar streams 
+ofstream NIS;
+
+
+
 int main()
 {
   uWS::Hub h;
 
   // Create a Kalman Filter instance
   UKF ukf;
+   
+  //Create Files dor Laser and Radar output
+  NIS.open ("nis.txt");
+    
+    
+    
+  
 
   // used to compute the RMSE later
   Tools tools;
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
+    
 
   h.onMessage([&ukf,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -128,7 +144,12 @@ int main()
     	  estimations.push_back(estimate);
 
     	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
-
+            
+          //Output NIS values
+          NIS << ukf.NIS_radar_ << "," << ukf.NIS_laser_ << "\n";
+          cout << "NIS Radar: " << ukf.NIS_radar_ << "NIS Laser: " << ukf.NIS_laser_ << endl;
+            
+          
           json msgJson;
           msgJson["estimate_x"] = p_x;
           msgJson["estimate_y"] = p_y;
@@ -185,6 +206,11 @@ int main()
     return -1;
   }
   h.run();
+   
+  NIS.close();
+    
+  
+    
 }
 
 
